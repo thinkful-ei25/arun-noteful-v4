@@ -9,8 +9,10 @@
 	"main": "server.js",
 	"scripts": {
 		"start": "node server.js",
-		"test": "cross-env NODE_ENV=test mocha",
-		"cover": "nyc --reporter=lcov --reporter=text-summary npm test"
+		"dev": "nodemon server.js",
+		"test": "cross-env NODE_ENV=test nyc -r lcov mocha \"test/**/*.test.js\"",
+		"cover": "nyc report",
+		"seed-database": "node utils/seed-database.js"
 	},
 	"dependencies": {
 		"dotenv": "^6.1.0",
