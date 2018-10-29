@@ -1,0 +1,14 @@
+root: true
+
+extends: airbnb-base
+
+parserOptions:
+  sourceType: script
+
+rules:
+  max-len:
+    - warn
+    - code: 88
+  no-underscore-dangle:
+    - error
+    - allow: ['_id', '__v']
