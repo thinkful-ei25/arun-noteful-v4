@@ -1,4 +1,5 @@
-/* eslint-disable */
+/* eslint-disable no-console */
+
 'use strict';
 
 const express = require('express');
@@ -19,9 +20,11 @@ const usersRouter = require('./routes/users');
 const app = express();
 
 // Log all requests. Skip logging during
-app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'common', {
-  skip: () => process.env.NODE_ENV === 'test'
-}));
+app.use(
+  morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'common', {
+    skip: () => process.env.NODE_ENV === 'test',
+  }),
+);
 
 // Set up passport
 passport.use(localStrategy);
@@ -47,6 +50,7 @@ app.use((req, res, next) => {
 });
 
 // Custom Error Handler
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   if (err.status) {
     const errBody = Object.assign({}, err, { message: err.message });
@@ -59,20 +63,26 @@ app.use((err, req, res, next) => {
 // Listen for incoming connections
 if (require.main === module) {
   // Connect to DB and Listen for incoming connections
-  mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useCreateIndex : true })
-    .then(instance => {
+  mongoose
+    .connect(
+      MONGODB_URI,
+      { useNewUrlParser: true, useCreateIndex: true },
+    )
+    .then((instance) => {
       const conn = instance.connections[0];
       console.info(`Connected to: mongodb://${conn.host}:${conn.port}/${conn.name}`);
     })
-    .catch(err => {
+    .catch((err) => {
       console.error(err);
     });
 
-  app.listen(PORT, function () {
-    console.info(`Server listening on ${this.address().port}`);
-  }).on('error', err => {
-    console.error(err);
-  });
+  app
+    .listen(PORT, function listen() {
+      console.info(`Server listening on ${this.address().port}`);
+    })
+    .on('error', (err) => {
+      console.error(err);
+    });
 }
 
 module.exports = app; // Export for testing
