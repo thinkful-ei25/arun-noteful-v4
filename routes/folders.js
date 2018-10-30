@@ -6,8 +6,10 @@ const mongoose = require('mongoose');
 
 const Folder = require('../models/folder');
 const Note = require('../models/note');
+const tokenAuth = require('../auth/tokenAuth');
 
 const router = express.Router();
+router.use(tokenAuth);
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {

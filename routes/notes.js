@@ -5,8 +5,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 
 const Note = require('../models/note');
+const tokenAuth = require('../auth/tokenAuth');
 
 const router = express.Router();
+router.use(tokenAuth);
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {

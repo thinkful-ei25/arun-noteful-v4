@@ -3,6 +3,15 @@
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 
+const serializationOption = {
+  virtuals: true,
+  transform(doc, result) {
+    delete result._id;
+    delete result.__v;
+    delete result.password;
+  },
+};
+
 const userSchema = new mongoose.Schema(
   {
     username: { type: String, required: true, unique: true },
@@ -10,14 +19,8 @@ const userSchema = new mongoose.Schema(
     fullname: String,
   },
   {
-    toJSON: {
-      virtuals: true,
-      transform(doc, result) {
-        delete result._id;
-        delete result.__v;
-        delete result.password;
-      },
-    },
+    toJSON: serializationOption,
+    toObject: serializationOption,
   },
 );
 
