@@ -6,8 +6,10 @@ const mongoose = require('mongoose');
 
 const Tag = require('../models/tag');
 const Note = require('../models/note');
+const jwtMiddleware = require('../auth/jwtMiddleware');
 
 const router = express.Router();
+router.use(jwtMiddleware);
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {

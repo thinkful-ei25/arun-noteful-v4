@@ -5,8 +5,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 
 const Note = require('../models/note');
+const jwtMiddleWare = require('../auth/jwtMiddleware');
 
 const router = express.Router();
+router.use(jwtMiddleWare);
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {

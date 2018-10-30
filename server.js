@@ -12,6 +12,7 @@ const { PORT, MONGODB_URI } = require('./config');
 const authRouter = require('./routes/auth');
 const notesRouter = require('./routes/notes');
 const foldersRouter = require('./routes/folders');
+const jwtStrategy = require('./auth/jwtStrategy');
 const localStrategy = require('./auth/localStrategy');
 const tagsRouter = require('./routes/tags');
 const usersRouter = require('./routes/users');
@@ -28,6 +29,7 @@ app.use(
 
 // Set up passport
 passport.use(localStrategy);
+passport.use(jwtStrategy);
 
 // Create a static webserver
 app.use(express.static('public'));
