@@ -15,7 +15,6 @@ router.use(tokenAuth);
 
 function validateObjectIds(req, res, next) {
   const { folderId, tags } = req.body;
-  const { id: userId } = req.user;
 
   if (folderId && !mongoose.Types.ObjectId.isValid(folderId)) {
     const err = new Error('The `folderId` is invalid');
@@ -28,6 +27,50 @@ function validateObjectIds(req, res, next) {
     err.status = 400;
     return next(err);
   }
+
+  next();
+}
+
+function validateFolderOwnership(req, res, next) {
+  const { folderId } = req.body;
+  const { id: userId } = req.user;
+
+  if (!folderId) {
+    return next();
+  }
+
+  Folder.findOne({ _id: folderId, userId }).then((folder) => {
+    if (!folder) {
+      const err = new Error('The `folderId` does not exist');
+      err.status = 422;
+      return next(err);
+    }
+
+    next();
+  });
+}
+
+function validateTagOwnership(req, res, next) {
+  const { tags } = req.body;
+  const { id: userId } = req.user;
+
+  if (!tags) {
+    return next;
+  }
+
+  Tag.find({ _id: { $in: tags }, userId }).then((results) => {
+    const ownedTagIds = results.map(tag => tag.id.toString());
+    const badIds = tags.filter(tag => !ownedTagIds.includes(tag));
+    if (badIds.length) {
+      const err = new Error(
+        `The following tag ids don't exist: [${badIds.join(', ')}]`,
+      );
+      err.status = 422;
+      return next(err);
+    }
+
+    next();
+  });
 }
 
 /* ========== GET/READ ALL ITEMS ========== */
@@ -88,88 +131,104 @@ router.get('/:id', (req, res, next) => {
 });
 
 /* ========== POST/CREATE AN ITEM ========== */
-router.post('/', validateObjectIds, (req, res, next) => {
-  const {
-    title, content, folderId, tags,
-  } = req.body;
-  const { id: userId } = req.user;
+router.post(
+  '/',
+  validateObjectIds,
+  validateFolderOwnership,
+  validateTagOwnership,
+  (req, res, next) => {
+    const {
+      title, content, folderId, tags,
+    } = req.body;
+    const { id: userId } = req.user;
 
-  /** *** Never trust users - validate input **** */
-  if (!title) {
-    const err = new Error('Missing `title` in request body');
-    err.status = 400;
-    return next(err);
-  }
+    /** *** Never trust users - validate input **** */
+    if (!title) {
+      const err = new Error('Missing `title` in request body');
+      err.status = 400;
+      return next(err);
+    }
 
-  const newNote = {
-    title, content, folderId, tags, userId,
-  };
-  if (newNote.folderId === '') {
-    delete newNote.folderId;
-  }
+    const newNote = {
+      title,
+      content,
+      folderId,
+      tags,
+      userId,
+    };
+    if (newNote.folderId === '') {
+      delete newNote.folderId;
+    }
 
-  Note.create(newNote)
-    .then((result) => {
-      res
-        .location(`${req.originalUrl}/${result.id}`)
-        .status(201)
-        .json(result);
-    })
-    .catch((err) => {
-      next(err);
-    });
-});
+    Note.create(newNote)
+      .then((result) => {
+        res
+          .location(`${req.originalUrl}/${result.id}`)
+          .status(201)
+          .json(result);
+      })
+      .catch((err) => {
+        next(err);
+      });
+  },
+);
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
-router.put('/:id', validateObjectIds, (req, res, next) => {
-  const { id } = req.params;
-  const { id: userId } = req.user;
+router.put(
+  '/:id',
+  validateObjectIds,
+  validateFolderOwnership,
+  validateTagOwnership,
+  (req, res, next) => {
+    const { id } = req.params;
+    const { id: userId } = req.user;
 
-  const toUpdate = {};
-  const updateableFields = ['title', 'content', 'folderId', 'tags', 'userId'];
+    const toUpdate = {};
+    const updateableFields = ['title', 'content', 'folderId', 'tags', 'userId'];
 
-  updateableFields.forEach((field) => {
-    if (field in req.body) {
-      toUpdate[field] = req.body[field];
-    }
-  });
-
-  /** *** Never trust users - validate input **** */
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    const err = new Error('The `id` is not valid');
-    err.status = 400;
-    return next(err);
-  }
-
-  if (toUpdate.title === '') {
-    const err = new Error('Missing `title` in request body');
-    err.status = 400;
-    return next(err);
-  }
-
-  if (userId !== toUpdate.userId) {
-    const err = new Error('Cannot transfer note to another user');
-    err.status = 422;
-    return next(err);
-  }
-
-  if (toUpdate.folderId === '') {
-    delete toUpdate.folderId;
-    toUpdate.$unset = { folderId: 1 };
-  }
-
-  Note.findOneAndUpdate({ _id: id, userId }, toUpdate, { new: true })
-    .then((result) => {
-      if (result) {
-        res.json(result);
-      } else {
-        next();
+    updateableFields.forEach((field) => {
+      if (field in req.body) {
+        toUpdate[field] = req.body[field];
       }
-    })
-    .catch((err) => {
-      next(err);
     });
-});
+
+    /** *** Never trust users - validate input **** */
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const err = new Error('The `id` is not valid');
+      err.status = 400;
+      return next(err);
+    }
+
+    if (toUpdate.title === '') {
+      const err = new Error('Missing `title` in request body');
+      err.status = 400;
+      return next(err);
+    }
+
+    if (userId !== toUpdate.userId) {
+      const err = new Error('Cannot transfer note to another user');
+      err.status = 422;
+      return next(err);
+    }
+
+    if (toUpdate.folderId === '') {
+      delete toUpdate.folderId;
+      toUpdate.$unset = { folderId: 1 };
+    }
+
+    Note.findOneAndUpdate({ _id: id, userId }, toUpdate, { new: true })
+      .then((result) => {
+        if (result) {
+          res.json(result);
+        } else {
+          next();
+        }
+      })
+      .catch((err) => {
+        next(err);
+      });
+  },
+);
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/:id', (req, res, next) => {
