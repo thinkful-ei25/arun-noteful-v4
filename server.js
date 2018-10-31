@@ -22,7 +22,7 @@ const app = express();
 
 // Log all requests. Skip logging during
 app.use(
-  morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'common', {
+  morgan(process.env.NODE_ENV === 'production' ? 'common' : 'dev', {
     skip: () => process.env.NODE_ENV === 'test',
   }),
 );
@@ -58,6 +58,7 @@ app.use((err, req, res, next) => {
     const errBody = Object.assign({}, err, { message: err.message });
     res.status(err.status).json(errBody);
   } else {
+    console.error(err);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
