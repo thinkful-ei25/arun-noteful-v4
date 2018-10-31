@@ -37,7 +37,6 @@ describe('/api/users', () => {
             return User.findById(res.body.id);
           })
           .then((result) => {
-            expect(result.toObject()).to.include.all.keys('username', 'password');
             expect(result.username).to.equal(user.username);
             return bcrypt.compare(user.password, result.password);
           })
