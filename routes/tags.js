@@ -1,4 +1,5 @@
-/* eslint-disable */
+/* eslint-disable consistent-return, no-param-reassign */
+
 'use strict';
 
 const express = require('express');
@@ -13,13 +14,12 @@ router.use(tokenAuth);
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
-
   Tag.find()
     .sort('name')
-    .then(results => {
+    .then((results) => {
       res.json(results);
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 });
@@ -28,7 +28,7 @@ router.get('/', (req, res, next) => {
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
@@ -36,14 +36,14 @@ router.get('/:id', (req, res, next) => {
   }
 
   Tag.findById(id)
-    .then(result => {
+    .then((result) => {
       if (result) {
         res.json(result);
       } else {
         next();
       }
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 });
@@ -54,7 +54,7 @@ router.post('/', (req, res, next) => {
 
   const newTag = { name };
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!name) {
     const err = new Error('Missing `name` in request body');
     err.status = 400;
@@ -62,10 +62,13 @@ router.post('/', (req, res, next) => {
   }
 
   Tag.create(newTag)
-    .then(result => {
-      res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
+    .then((result) => {
+      res
+        .location(`${req.originalUrl}/${result.id}`)
+        .status(201)
+        .json(result);
     })
-    .catch(err => {
+    .catch((err) => {
       if (err.code === 11000) {
         err = new Error('Tag name already exists');
         err.status = 400;
@@ -79,7 +82,7 @@ router.put('/:id', (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
@@ -95,14 +98,14 @@ router.put('/:id', (req, res, next) => {
   const updateTag = { name };
 
   Tag.findByIdAndUpdate(id, updateTag, { new: true })
-    .then(result => {
+    .then((result) => {
       if (result) {
         res.json(result);
       } else {
         next();
       }
     })
-    .catch(err => {
+    .catch((err) => {
       if (err.code === 11000) {
         err = new Error('Tag name already exists');
         err.status = 400;
@@ -115,7 +118,7 @@ router.put('/:id', (req, res, next) => {
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
@@ -124,19 +127,15 @@ router.delete('/:id', (req, res, next) => {
 
   const tagRemovePromise = Tag.findByIdAndRemove(id);
 
-  const noteUpdatePromise = Note.updateMany(
-    { tags: id },
-    { $pull: { tags: id } }
-  );
+  const noteUpdatePromise = Note.updateMany({ tags: id }, { $pull: { tags: id } });
 
   Promise.all([tagRemovePromise, noteUpdatePromise])
     .then(() => {
       res.sendStatus(204);
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
-
 });
 
 module.exports = router;
