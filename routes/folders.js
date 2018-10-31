@@ -136,23 +136,13 @@ router.delete('/:id', (req, res, next) => {
     return next(err);
   }
 
-  // ON DELETE SET NULL equivalent
-  const folderRemovePromise = Folder.findOneAndDelete({ _id: id });
-  // ON DELETE CASCADE equivalent
-  // const noteRemovePromise = Note.deleteMany({ folderId: id });
-
-  const noteRemovePromise = Note.updateMany(
-    { folderId: id },
-    { $unset: { folderId: '' } },
-  );
-
-  folderRemovePromise
+  Folder.findOneAndDelete({ _id: id })
     .then((deleted) => {
       if (!deleted) {
         return;
       }
 
-      return noteRemovePromise;
+      return Note.updateMany({ folderId: id }, { $unset: { folderId: '' } });
     })
     .then(() => {
       res.sendStatus(204);
