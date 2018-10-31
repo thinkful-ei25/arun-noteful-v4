@@ -13,8 +13,9 @@ router.use(tokenAuth);
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
+  const { id: userId } = req.user;
 
-  Folder.find()
+  Folder.find({ userId })
     .sort('name')
     .then(results => {
       res.json(results);
@@ -27,6 +28,7 @@ router.get('/', (req, res, next) => {
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
+  const { id: userId } = req.user;
 
   /***** Never trust users - validate input *****/
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -35,7 +37,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Folder.findById(id)
+  Folder.findOne({ _id: id, userId })
     .then(result => {
       if (result) {
         res.json(result);
@@ -51,8 +53,9 @@ router.get('/:id', (req, res, next) => {
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/', (req, res, next) => {
   const { name } = req.body;
+  const { id: userId } = req.user;
 
-  const newFolder = { name };
+  const newFolder = { name, userId };
 
   /***** Never trust users - validate input *****/
   if (!name) {
@@ -78,6 +81,7 @@ router.post('/', (req, res, next) => {
 router.put('/:id', (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
+  const { id: userId } = req.user;
 
   /***** Never trust users - validate input *****/
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -92,9 +96,15 @@ router.put('/:id', (req, res, next) => {
     return next(err);
   }
 
-  const updateFolder = { name };
+  if (userId !== req.body.userId) {
+    const err = new Error('Cannot transfer folder to a different user');
+    err.status = 403;
+    return next(err);
+  }
 
-  Folder.findByIdAndUpdate(id, updateFolder, { new: true })
+  const updateFolder = { name, userId };
+
+  Folder.findOneAndUpdate({ _id: id, userId }, updateFolder, { new: true })
     .then(result => {
       if (result) {
         res.json(result);
@@ -123,7 +133,7 @@ router.delete('/:id', (req, res, next) => {
   }
 
   // ON DELETE SET NULL equivalent
-  const folderRemovePromise = Folder.findByIdAndRemove(id);
+  const folderRemovePromise = Folder.findOneAndDelete({_id: id});
   // ON DELETE CASCADE equivalent
   // const noteRemovePromise = Note.deleteMany({ folderId: id });
 
@@ -132,13 +142,17 @@ router.delete('/:id', (req, res, next) => {
     { $unset: { folderId: '' } }
   );
 
-  Promise.all([folderRemovePromise, noteRemovePromise])
-    .then(() => {
-      res.sendStatus(204);
-    })
-    .catch(err => {
-      next(err);
-    });
+  folderRemovePromise.then((deleted) => {
+    if(!deleted) {
+      return;
+    }
+
+    return noteRemovePromise;
+  })
+  .then(() => {
+    res.sendStatus(204);
+  })
+  .catch(next);
 });
 
 module.exports = router;
