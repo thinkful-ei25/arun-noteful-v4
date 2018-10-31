@@ -5,11 +5,30 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
+const Folder = require('../models/folder');
 const Note = require('../models/note');
+const Tag = require('../models/tag');
 const tokenAuth = require('../auth/tokenAuth');
 
 const router = express.Router();
 router.use(tokenAuth);
+
+function validateObjectIds(req, res, next) {
+  const { folderId, tags } = req.body;
+  const { id: userId } = req.user;
+
+  if (folderId && !mongoose.Types.ObjectId.isValid(folderId)) {
+    const err = new Error('The `folderId` is invalid');
+    err.status = 400;
+    return next(err);
+  }
+
+  if (tags && tags.some(tag => !mongoose.Types.ObjectId.isValid(tag))) {
+    const err = new Error('The `tags` array contains an invalid id');
+    err.status = 400;
+    return next(err);
+  }
+}
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
@@ -69,7 +88,7 @@ router.get('/:id', (req, res, next) => {
 });
 
 /* ========== POST/CREATE AN ITEM ========== */
-router.post('/', (req, res, next) => {
+router.post('/', validateObjectIds, (req, res, next) => {
   const {
     title, content, folderId, tags,
   } = req.body;
@@ -80,21 +99,6 @@ router.post('/', (req, res, next) => {
     const err = new Error('Missing `title` in request body');
     err.status = 400;
     return next(err);
-  }
-
-  if (folderId && !mongoose.Types.ObjectId.isValid(folderId)) {
-    const err = new Error('The `folderId` is not valid');
-    err.status = 400;
-    return next(err);
-  }
-
-  if (tags) {
-    const badIds = tags.filter(tag => !mongoose.Types.ObjectId.isValid(tag));
-    if (badIds.length) {
-      const err = new Error('The `tags` array contains an invalid `id`');
-      err.status = 400;
-      return next(err);
-    }
   }
 
   const newNote = {
@@ -117,7 +121,7 @@ router.post('/', (req, res, next) => {
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
-router.put('/:id', (req, res, next) => {
+router.put('/:id', validateObjectIds, (req, res, next) => {
   const { id } = req.params;
   const { id: userId } = req.user;
 
@@ -141,21 +145,6 @@ router.put('/:id', (req, res, next) => {
     const err = new Error('Missing `title` in request body');
     err.status = 400;
     return next(err);
-  }
-
-  if (toUpdate.folderId && !mongoose.Types.ObjectId.isValid(toUpdate.folderId)) {
-    const err = new Error('The `folderId` is not valid');
-    err.status = 400;
-    return next(err);
-  }
-
-  if (toUpdate.tags) {
-    const badIds = toUpdate.tags.filter(tag => !mongoose.Types.ObjectId.isValid(tag));
-    if (badIds.length) {
-      const err = new Error('The `tags` array contains an invalid `id`');
-      err.status = 400;
-      return next(err);
-    }
   }
 
   if (userId !== toUpdate.userId) {
