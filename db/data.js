@@ -10,6 +10,7 @@ const notes = [
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
     folderId: '111111111111111111111100',
     tags: [],
+    userId: '333333333333333333333001',
   },
   {
     _id: '000000000000000000000001',
@@ -18,6 +19,7 @@ const notes = [
       'Posuere sollicitudin aliquam ultrices sagittis orci a. Feugiat sed lectus vestibulum mattis ullamcorper velit. Odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Velit egestas dui id ornare arcu odio. Molestie at elementum eu facilisis sed odio morbi. Tempor nec feugiat nisl pretium. At tempor commodo ullamcorper a lacus. Egestas dui id ornare arcu odio. Id cursus metus aliquam eleifend. Vitae sapien pellentesque habitant morbi tristique. Dis parturient montes nascetur ridiculus. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Aliquam faucibus purus in massa tempor nec feugiat nisl.',
     folderId: '111111111111111111111100',
     tags: ['222222222222222222222200'],
+    userId: '333333333333333333333002',
   },
   {
     _id: '000000000000000000000002',
@@ -26,6 +28,7 @@ const notes = [
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
     folderId: '111111111111111111111100',
     tags: ['222222222222222222222200', '222222222222222222222201'],
+    userId: '333333333333333333333001',
   },
   {
     _id: '000000000000000000000003',
@@ -33,6 +36,7 @@ const notes = [
     content:
       'Posuere sollicitudin aliquam ultrices sagittis orci a. Feugiat sed lectus vestibulum mattis ullamcorper velit. Odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Velit egestas dui id ornare arcu odio. Molestie at elementum eu facilisis sed odio morbi. Tempor nec feugiat nisl pretium. At tempor commodo ullamcorper a lacus. Egestas dui id ornare arcu odio. Id cursus metus aliquam eleifend. Vitae sapien pellentesque habitant morbi tristique. Dis parturient montes nascetur ridiculus. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Aliquam faucibus purus in massa tempor nec feugiat nisl.',
     folderId: '111111111111111111111101',
+    userId: '333333333333333333333001',
   },
   {
     _id: '000000000000000000000004',
@@ -41,6 +45,7 @@ const notes = [
       'Lorem ipsum dolor sit amet, boring consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
     folderId: '111111111111111111111102',
     tags: ['222222222222222222222201'],
+    userId: '333333333333333333333001',
   },
   {
     _id: '000000000000000000000005',
@@ -49,6 +54,7 @@ const notes = [
       'Posuere sollicitudin aliquam ultrices sagittis orci a. Feugiat sed lectus vestibulum mattis ullamcorper velit. Odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Velit egestas dui id ornare arcu odio. Molestie at elementum eu facilisis sed odio morbi. Tempor nec feugiat nisl pretium. At tempor commodo ullamcorper a lacus. Egestas dui id ornare arcu odio. Id cursus metus aliquam eleifend. Vitae sapien pellentesque habitant morbi tristique. Dis parturient montes nascetur ridiculus. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Aliquam faucibus purus in massa tempor nec feugiat nisl.',
     folderId: '111111111111111111111102',
     tags: ['222222222222222222222201', '222222222222222222222202'],
+    userId: '333333333333333333333002',
   },
   {
     _id: '000000000000000000000006',
@@ -57,6 +63,7 @@ const notes = [
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
     folderId: '111111111111111111111102',
     tags: ['222222222222222222222203'],
+    userId: '333333333333333333333001',
   },
   {
     _id: '000000000000000000000007',
@@ -64,6 +71,7 @@ const notes = [
     content:
       'Posuere sollicitudin aliquam ultrices sagittis orci a. Feugiat sed lectus vestibulum mattis ullamcorper velit. Odio pellentesque diam volutpat commodo sed egestas egestas fringilla. Velit egestas dui id ornare arcu odio. Molestie at elementum eu facilisis sed odio morbi. Tempor nec feugiat nisl pretium. At tempor commodo ullamcorper a lacus. Egestas dui id ornare arcu odio. Id cursus metus aliquam eleifend. Vitae sapien pellentesque habitant morbi tristique. Dis parturient montes nascetur ridiculus. Egestas egestas fringilla phasellus faucibus scelerisque eleifend. Aliquam faucibus purus in massa tempor nec feugiat nisl.',
     folderId: '111111111111111111111103',
+    userId: '333333333333333333333001',
   },
 ];
 
@@ -71,18 +79,22 @@ const folders = [
   {
     _id: '111111111111111111111100',
     name: 'Archive',
+    userId: '333333333333333333333001',
   },
   {
     _id: '111111111111111111111101',
     name: 'Drafts',
+    userId: '333333333333333333333001',
   },
   {
     _id: '111111111111111111111102',
     name: 'Personal',
+    userId: '333333333333333333333002',
   },
   {
     _id: '111111111111111111111103',
     name: 'Work',
+    userId: '333333333333333333333002',
   },
 ];
 
@@ -90,19 +102,40 @@ const tags = [
   {
     _id: '222222222222222222222200',
     name: 'breed',
+    userId: '333333333333333333333002',
   },
   {
     _id: '222222222222222222222201',
     name: 'hybrid',
+    userId: '333333333333333333333001',
   },
   {
     _id: '222222222222222222222202',
     name: 'domestic',
+    userId: '333333333333333333333001',
   },
   {
     _id: '222222222222222222222203',
     name: 'feral',
+    userId: '333333333333333333333002',
   },
 ];
 
-module.exports = { folders, notes, tags };
+const users = [
+  {
+    _id: '333333333333333333333001',
+    fullname: 'Bob',
+    username: 'bob',
+    password: '$2a$10$IjKLVXcsmAUeQf1heENk9eQZ6UR.3kltQTRgTVF4TgawWTCGoyoFW',
+  },
+  {
+    _id: '333333333333333333333002',
+    fullname: 'Alice',
+    username: 'alice',
+    password: '$2a$10$h3MZ/3jEIND3jIzuvhK0heLQ45H3zsI9MS5c2sJCKJtZxC1Qk93ji',
+  },
+];
+
+module.exports = {
+  folders, notes, tags, users,
+};
