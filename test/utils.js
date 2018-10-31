@@ -41,7 +41,7 @@ const utils = {
   },
 
   disconnectFromDatabase() {
-    return mongoose.disconnect();
+    return mongoose.connection.dropDatabase().then(() => mongoose.disconnect());
   },
 };
 

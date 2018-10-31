@@ -1,4 +1,5 @@
-/* eslint-disable */
+/* eslint-disable consistent-return, no-param-reassign */
+
 'use strict';
 
 const express = require('express');
@@ -13,13 +14,14 @@ router.use(tokenAuth);
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
+  const { id: userId } = req.user;
 
-  Folder.find()
+  Folder.find({ userId })
     .sort('name')
-    .then(results => {
+    .then((results) => {
       res.json(results);
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 });
@@ -27,23 +29,24 @@ router.get('/', (req, res, next) => {
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
+  const { id: userId } = req.user;
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
     return next(err);
   }
 
-  Folder.findById(id)
-    .then(result => {
+  Folder.findOne({ _id: id, userId })
+    .then((result) => {
       if (result) {
         res.json(result);
       } else {
         next();
       }
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 });
@@ -51,10 +54,11 @@ router.get('/:id', (req, res, next) => {
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/', (req, res, next) => {
   const { name } = req.body;
+  const { id: userId } = req.user;
 
-  const newFolder = { name };
+  const newFolder = { name, userId };
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!name) {
     const err = new Error('Missing `name` in request body');
     err.status = 400;
@@ -62,10 +66,13 @@ router.post('/', (req, res, next) => {
   }
 
   Folder.create(newFolder)
-    .then(result => {
-      res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
+    .then((result) => {
+      res
+        .location(`${req.originalUrl}/${result.id}`)
+        .status(201)
+        .json(result);
     })
-    .catch(err => {
+    .catch((err) => {
       if (err.code === 11000) {
         err = new Error('Folder name already exists');
         err.status = 400;
@@ -78,8 +85,9 @@ router.post('/', (req, res, next) => {
 router.put('/:id', (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
+  const { id: userId } = req.user;
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
@@ -92,17 +100,23 @@ router.put('/:id', (req, res, next) => {
     return next(err);
   }
 
-  const updateFolder = { name };
+  if (userId !== req.body.userId) {
+    const err = new Error('Cannot transfer folder to a different user');
+    err.status = 403;
+    return next(err);
+  }
 
-  Folder.findByIdAndUpdate(id, updateFolder, { new: true })
-    .then(result => {
+  const updateFolder = { name, userId };
+
+  Folder.findOneAndUpdate({ _id: id, userId }, updateFolder, { new: true })
+    .then((result) => {
       if (result) {
         res.json(result);
       } else {
         next();
       }
     })
-    .catch(err => {
+    .catch((err) => {
       if (err.code === 11000) {
         err = new Error('Folder name already exists');
         err.status = 400;
@@ -115,30 +129,25 @@ router.put('/:id', (req, res, next) => {
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
     return next(err);
   }
 
-  // ON DELETE SET NULL equivalent
-  const folderRemovePromise = Folder.findByIdAndRemove(id);
-  // ON DELETE CASCADE equivalent
-  // const noteRemovePromise = Note.deleteMany({ folderId: id });
+  Folder.findOneAndDelete({ _id: id })
+    .then((deleted) => {
+      if (!deleted) {
+        return;
+      }
 
-  const noteRemovePromise = Note.updateMany(
-    { folderId: id },
-    { $unset: { folderId: '' } }
-  );
-
-  Promise.all([folderRemovePromise, noteRemovePromise])
+      return Note.updateMany({ folderId: id }, { $unset: { folderId: '' } });
+    })
     .then(() => {
       res.sendStatus(204);
     })
-    .catch(err => {
-      next(err);
-    });
+    .catch(next);
 });
 
 module.exports = router;

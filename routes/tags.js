@@ -1,4 +1,5 @@
-/* eslint-disable */
+/* eslint-disable consistent-return, no-param-reassign */
+
 'use strict';
 
 const express = require('express');
@@ -13,13 +14,14 @@ router.use(tokenAuth);
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
+  const { id: userId } = req.user;
 
-  Tag.find()
+  Tag.find({ userId })
     .sort('name')
-    .then(results => {
+    .then((results) => {
       res.json(results);
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 });
@@ -27,23 +29,24 @@ router.get('/', (req, res, next) => {
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
+  const { id: userId } = req.user;
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
     return next(err);
   }
 
-  Tag.findById(id)
-    .then(result => {
+  Tag.find({ _id: id, userId })
+    .then((result) => {
       if (result) {
         res.json(result);
       } else {
         next();
       }
     })
-    .catch(err => {
+    .catch((err) => {
       next(err);
     });
 });
@@ -51,10 +54,11 @@ router.get('/:id', (req, res, next) => {
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/', (req, res, next) => {
   const { name } = req.body;
+  const { id: userId } = req.user;
 
-  const newTag = { name };
+  const newTag = { name, userId };
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!name) {
     const err = new Error('Missing `name` in request body');
     err.status = 400;
@@ -62,10 +66,13 @@ router.post('/', (req, res, next) => {
   }
 
   Tag.create(newTag)
-    .then(result => {
-      res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
+    .then((result) => {
+      res
+        .location(`${req.originalUrl}/${result.id}`)
+        .status(201)
+        .json(result);
     })
-    .catch(err => {
+    .catch((err) => {
       if (err.code === 11000) {
         err = new Error('Tag name already exists');
         err.status = 400;
@@ -78,8 +85,9 @@ router.post('/', (req, res, next) => {
 router.put('/:id', (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
+  const { id: userId } = req.user;
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
@@ -92,17 +100,23 @@ router.put('/:id', (req, res, next) => {
     return next(err);
   }
 
-  const updateTag = { name };
+  if (userId !== req.body.userId) {
+    const err = new Error('Cannot transfer a tag to a different user');
+    err.status = 403;
+    return next(err);
+  }
 
-  Tag.findByIdAndUpdate(id, updateTag, { new: true })
-    .then(result => {
+  const updateTag = { name, userId };
+
+  Tag.findByIdAndUpdate({ _id: id, userId }, updateTag, { new: true })
+    .then((result) => {
       if (result) {
         res.json(result);
       } else {
         next();
       }
     })
-    .catch(err => {
+    .catch((err) => {
       if (err.code === 11000) {
         err = new Error('Tag name already exists');
         err.status = 400;
@@ -114,29 +128,25 @@ router.put('/:id', (req, res, next) => {
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
+  const { id: userId } = req.user;
 
-  /***** Never trust users - validate input *****/
+  /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
     return next(err);
   }
 
-  const tagRemovePromise = Tag.findByIdAndRemove(id);
+  Tag.findOneAndDelete({ _id: id, userId })
+    .then((deleted) => {
+      if (!deleted) {
+        return;
+      }
 
-  const noteUpdatePromise = Note.updateMany(
-    { tags: id },
-    { $pull: { tags: id } }
-  );
-
-  Promise.all([tagRemovePromise, noteUpdatePromise])
-    .then(() => {
-      res.sendStatus(204);
+      return Note.updateMany({ tags: id }, { $pull: { tags: id } });
     })
-    .catch(err => {
-      next(err);
-    });
-
+    .then(() => res.sendStatus(204))
+    .catch(next);
 });
 
 module.exports = router;
