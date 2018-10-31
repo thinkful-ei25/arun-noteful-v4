@@ -100,7 +100,7 @@ router.put('/:id', (req, res, next) => {
     return next(err);
   }
 
-  if (userId !== req.body.userId) {
+  if (req.body.userId && req.body.userId !== userId) {
     const err = new Error('Cannot transfer folder to a different user');
     err.status = 403;
     return next(err);
