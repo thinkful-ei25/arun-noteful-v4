@@ -8,7 +8,7 @@
       "type": "shell",
       "group": "test",
       "presentation": {
-        "focus": "true"
+        "focus": true
       },
       "command": [
         "./node_modules/.bin/cross-env NODE_ENV=test",
