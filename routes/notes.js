@@ -55,7 +55,7 @@ function validateTagOwnership(req, res, next) {
   const { id: userId } = req.user;
 
   if (!tags) {
-    return next;
+    return next();
   }
 
   Tag.find({ _id: { $in: tags }, userId }).then((results) => {

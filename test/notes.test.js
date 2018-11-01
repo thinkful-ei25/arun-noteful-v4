@@ -310,6 +310,7 @@ describe('Noteful API - Notes', function () {
       return chai
         .request(app)
         .post('/api/notes')
+        .set('Authorization', bearerAuth)
         .send(newItem)
         .then(function (_res) {
           res = _res;
@@ -324,6 +325,7 @@ describe('Noteful API - Notes', function () {
             'createdAt',
             'updatedAt',
             'tags',
+            'userId',
           );
           return Note.findById(res.body.id);
         })
@@ -346,6 +348,7 @@ describe('Noteful API - Notes', function () {
         .request(app)
         .post('/api/notes')
         .send(newItem)
+        .set('Authorization', bearerAuth)
         .then(function (_res) {
           res = _res;
           expect(res).to.have.status(201);
@@ -358,6 +361,7 @@ describe('Noteful API - Notes', function () {
             'createdAt',
             'updatedAt',
             'tags',
+            'userId',
           );
           return Note.findOne({ _id: res.body.id });
         })
@@ -379,6 +383,7 @@ describe('Noteful API - Notes', function () {
       return chai
         .request(app)
         .post('/api/notes')
+        .set('Authorization', bearerAuth)
         .send(newItem)
         .then(function (_res) {
           res = _res;
@@ -392,6 +397,7 @@ describe('Noteful API - Notes', function () {
             'createdAt',
             'updatedAt',
             'tags',
+            'userId',
           );
           return Note.findOne({ _id: res.body.id });
         })
@@ -412,6 +418,7 @@ describe('Noteful API - Notes', function () {
         .request(app)
         .post('/api/notes')
         .send(newItem)
+        .set('Authorization', bearerAuth)
         .then((res) => {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
@@ -425,6 +432,7 @@ describe('Noteful API - Notes', function () {
       return chai
         .request(app)
         .post('/api/notes')
+        .set('Authorization', bearerAuth)
         .send(newItem)
         .then((res) => {
           expect(res).to.have.status(400);
@@ -443,12 +451,13 @@ describe('Noteful API - Notes', function () {
       return chai
         .request(app)
         .post('/api/notes')
+        .set('Authorization', bearerAuth)
         .send(newItem)
         .then((res) => {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('The `folderId` is not valid');
+          expect(res.body.message).to.equal('The `folderId` is invalid');
         });
     });
 
@@ -461,13 +470,14 @@ describe('Noteful API - Notes', function () {
       return chai
         .request(app)
         .post('/api/notes')
+        .set('Authorization', bearerAuth)
         .send(newItem)
         .then((res) => {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
           expect(res.body.message).to.equal(
-            'The `tags` array contains an invalid `id`',
+            'The `tags` array contains an invalid id',
           );
         });
     });
@@ -485,6 +495,7 @@ describe('Noteful API - Notes', function () {
       return chai
         .request(app)
         .post('/api/notes')
+        .set('Authorization', bearerAuth)
         .send(newItem)
         .then((res) => {
           expect(res).to.have.status(500);
