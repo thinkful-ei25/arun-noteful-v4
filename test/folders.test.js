@@ -424,7 +424,7 @@ describe('Noteful API - Folders', function () {
         .then(function (res) {
           expect(res).to.have.status(204);
           expect(res.body).to.be.empty;
-          return Folder.count({ _id: data.id });
+          return Folder.countDocuments({ _id: data.id });
         })
         .then((count) => {
           expect(count).to.equal(0);
@@ -445,7 +445,7 @@ describe('Noteful API - Folders', function () {
         .then(function (res) {
           expect(res).to.have.status(204);
           expect(res.body).to.be.empty;
-          return Note.count({ folderId });
+          return Note.countDocuments({ folderId });
         })
         .then((count) => {
           expect(count).to.equal(0);
