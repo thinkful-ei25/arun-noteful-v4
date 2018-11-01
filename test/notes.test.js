@@ -476,9 +476,7 @@ describe('Noteful API - Notes', function () {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal(
-            'The `tags` array contains an invalid id',
-          );
+          expect(res.body.message).to.equal('The `tags` array contains an invalid id');
         });
     });
 
@@ -780,9 +778,7 @@ describe('Noteful API - Notes', function () {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal(
-            'The `tags` array contains an invalid id',
-          );
+          expect(res.body.message).to.equal('The `tags` array contains an invalid id');
         });
     });
 
@@ -811,14 +807,17 @@ describe('Noteful API - Notes', function () {
   describe('DELETE /api/notes/:id', function () {
     it('should delete an existing document and respond with 204', function () {
       let data;
-      return Note.findOne()
+      return Note.findOne({ userId })
         .then((_data) => {
           data = _data;
-          return chai.request(app).delete(`/api/notes/${data.id}`);
+          return chai
+            .request(app)
+            .delete(`/api/notes/${data.id}`)
+            .set('Authorization', bearerAuth);
         })
         .then((res) => {
           expect(res).to.have.status(204);
-          return Note.count({ _id: data.id });
+          return Note.countDocuments({ _id: data.id });
         })
         .then((count) => {
           expect(count).to.equal(0);
@@ -829,6 +828,7 @@ describe('Noteful API - Notes', function () {
       return chai
         .request(app)
         .delete('/api/notes/NOT-A-VALID-ID')
+        .set('Authorization', bearerAuth)
         .then((res) => {
           expect(res).to.have.status(400);
           expect(res.body.message).to.equal('The `id` is not valid');
@@ -838,7 +838,10 @@ describe('Noteful API - Notes', function () {
     it('should catch errors and respond properly', function () {
       sandbox.stub(express.response, 'sendStatus').throws('FakeError');
       return Note.findOne()
-        .then(data => chai.request(app).delete(`/api/notes/${data.id}`))
+        .then(data => chai
+          .request(app)
+          .delete(`/api/notes/${data.id}`)
+          .set('Authorization', bearerAuth))
         .then((res) => {
           expect(res).to.have.status(500);
           expect(res).to.be.json;
