@@ -205,7 +205,7 @@ router.put(
       return next(err);
     }
 
-    if (userId !== toUpdate.userId) {
+    if (toUpdate.userId && toUpdate.userId !== userId) {
       const err = new Error('Cannot transfer note to another user');
       err.status = 422;
       return next(err);
