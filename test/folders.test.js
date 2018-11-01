@@ -7,9 +7,7 @@ const sinon = require('sinon');
 
 const app = require('../server');
 const Folder = require('../models/folder');
-const User = require('../models/user');
 const Note = require('../models/note');
-const tokens = require('../auth/tokens');
 const utils = require('./utils');
 
 chai.use(chaiHttp);
@@ -25,10 +23,9 @@ describe('Noteful API - Folders', function () {
   beforeEach(function () {
     return utils
       .seedDatabase()
-      .then(() => User.findOne())
-      .then((user) => {
-        userId = user.id;
-        bearerAuth = `Bearer ${tokens.createAuthToken(user.toObject())}`;
+      .then(() => utils.generateBearerToken())
+      .then((obj) => {
+        ({ userId, bearerAuth } = obj);
       });
   });
 

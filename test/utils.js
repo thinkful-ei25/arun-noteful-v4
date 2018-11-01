@@ -10,6 +10,7 @@ const Folder = require('../models/folder');
 const Note = require('../models/note');
 const Tag = require('../models/tag');
 const User = require('../models/user');
+const tokens = require('../auth/tokens');
 
 const utils = {
   connectToDatabase() {
@@ -45,6 +46,13 @@ const utils = {
 
   disconnectFromDatabase() {
     return mongoose.connection.dropDatabase().then(() => mongoose.disconnect());
+  },
+
+  generateBearerToken() {
+    return User.findOne().then(user => ({
+      userId: user.id,
+      bearerAuth: `Bearer ${tokens.createAuthToken(user.toObject())}`,
+    }));
   },
 };
 
