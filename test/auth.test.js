@@ -2,7 +2,9 @@
 
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const jsonwebtoken = require('jsonwebtoken');
 
+const { JWT_SECRET } = require('../config');
 const server = require('../server');
 const User = require('../models/user');
 const utils = require('./utils');
@@ -29,7 +31,7 @@ describe('Authentication endpoints', () => {
       .then(digest => User.create(Object.assign({}, user, { password: digest }))));
 
     context('with valid credentials', () => {
-      it('should return the user object as JSON', function () {
+      it('should return a valid JWT', function () {
         return chai
           .request(server)
           .post(url)
@@ -37,10 +39,16 @@ describe('Authentication endpoints', () => {
           .then((res) => {
             expect(res).to.have.status(200);
             expect(res).to.be.json;
-            expect(res.body).to.include.all.keys('username', 'id', 'fullname');
-            expect(res.body).to.not.include.all.keys('password');
+            expect(res.body).to.include.all.keys('authToken');
 
-            expect(res.body.username).to.equal(user.username);
+            let payload;
+            expect(() => {
+              payload = jsonwebtoken.verify(res.body.authToken, JWT_SECRET, {
+                subject: user.username,
+              });
+            }).to.not.throw();
+            expect(payload.user).to.exist;
+            expect(payload.user).to.have.all.keys('username', 'fullname', 'id');
           });
       });
     });
