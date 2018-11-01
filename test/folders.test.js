@@ -18,7 +18,8 @@ describe('Noteful API - Folders', function () {
   let userId;
   let bearerAuth;
 
-  before(() => utils.connectToDatabase());
+  before(utils.connectToDatabase);
+  after(utils.disconnectFromDatabase);
 
   beforeEach(function () {
     return utils
@@ -32,10 +33,6 @@ describe('Noteful API - Folders', function () {
   afterEach(function () {
     sandbox.restore();
     return utils.cleanDatabase();
-  });
-
-  after(function () {
-    return utils.disconnectFromDatabase();
   });
 
   describe('GET /api/folders', function () {

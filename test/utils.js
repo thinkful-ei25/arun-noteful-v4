@@ -17,7 +17,7 @@ const utils = {
     // prettier-ignore
     return mongoose
       .connect(TEST_MONGODB_URI, MONGODB_OPTIONS)
-      .then(() => this.cleanDatabase())
+      .then(() => utils.cleanDatabase())
       .then(() => Promise.all([
         Note.createIndexes(),
         Tag.createIndexes(),
