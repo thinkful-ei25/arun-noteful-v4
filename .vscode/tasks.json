@@ -17,16 +17,12 @@
     },
     {
       "label": "test: all",
-      "type": "shell",
+      "type": "npm",
+      "script": "test",
       "group": "test",
       "presentation": {
         "focus": true
-      },
-      "command": [
-        "./node_modules/.bin/cross-env NODE_ENV=test",
-        "./node_modules/.bin/nyc -r lcov",
-        "./node_modules/.bin/mocha \"test/**/*.test.js\""
-      ]
+      }
     }
   ]
 }
