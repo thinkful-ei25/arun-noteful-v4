@@ -65,6 +65,12 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
 
+  if (req.body.userId && req.body.userId !== userId) {
+    const err = new Error('Cannot transfer a tag to a different user');
+    err.status = 403;
+    return next(err);
+  }
+
   Tag.create(newTag)
     .then((result) => {
       res
@@ -108,7 +114,7 @@ router.put('/:id', (req, res, next) => {
 
   const updateTag = { name, userId };
 
-  Tag.findByIdAndUpdate({ _id: id, userId }, updateTag, { new: true })
+  Tag.findOneAndUpdate({ _id: id, userId }, updateTag, { new: true })
     .then((result) => {
       if (result) {
         res.json(result);

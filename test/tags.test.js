@@ -8,6 +8,7 @@ const sinon = require('sinon');
 const app = require('../server');
 const Tag = require('../models/tag');
 const Note = require('../models/note');
+const User = require('../models/user');
 const utils = require('./utils');
 
 chai.use(chaiHttp);
@@ -258,6 +259,24 @@ describe('Noteful API - Tags', function () {
           expect(res.body.message).to.equal('Internal Server Error');
         });
     });
+
+    it('should not allow a user to create tags on behalf of another user', function () {
+      return User.findOne({ _id: { $ne: userId } })
+        .then((otherUser) => {
+          const fixture = {
+            name: '<Insert of game of throne spoiler here>',
+            userId: otherUser.id,
+          };
+          return chai
+            .request(app)
+            .post('/api/tags')
+            .set('Authorization', bearerAuth)
+            .send(fixture);
+        })
+        .then((res) => {
+          expect(res).to.have.status(403);
+        });
+    });
   });
 
   describe('PUT /api/tags/:id', function () {
@@ -395,6 +414,43 @@ describe('Noteful API - Tags', function () {
           expect(res.body.message).to.equal('Internal Server Error');
         });
     });
+
+    it("should prevent users from overwriting someone else's tags", function () {
+      return User.findOne({ _id: { $ne: userId } })
+        .then(otherUser => Tag.findOne({ userId: otherUser.id }))
+        .then((tag) => {
+          const fixture = { name: '<GoT Spoiler>' };
+          return chai
+            .request(app)
+            .put(`/api/tags/${tag.id}`)
+            .set('Authorization', bearerAuth)
+            .send(fixture);
+        })
+        .then((res) => {
+          expect(res).to.have.status(404);
+        });
+    });
+
+    it('should prevent transfering a tag to another user', function () {
+      let otherUser;
+      return User.findOne({ _id: { $ne: userId } })
+        .then((aUser) => {
+          otherUser = aUser;
+        })
+        .then(() => Tag.findOne({ userId }))
+        .then((tag) => {
+          expect(tag).to.exist;
+          const fixture = Object.assign(tag.toObject(), { userId: otherUser.id });
+          return chai
+            .request(app)
+            .put(`/api/tags/${tag.id}`)
+            .set('Authorization', bearerAuth)
+            .send(fixture);
+        })
+        .then((res) => {
+          expect(res).to.have.status(403);
+        });
+    });
   });
 
   describe('DELETE /api/tags/:id', function () {
@@ -462,6 +518,26 @@ describe('Noteful API - Tags', function () {
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
           expect(res.body.message).to.equal('Internal Server Error');
+        });
+    });
+
+    it("should not delete another user's tags", function () {
+      let fixture;
+      return User.findOne({ _id: { $ne: userId } })
+        .then(otherUser => Tag.findOne({ userId: otherUser.id }))
+        .then((tag) => {
+          fixture = tag;
+          return chai
+            .request(app)
+            .delete(`/api/tags/${tag.id}`)
+            .set('Authorization', bearerAuth);
+        })
+        .then((res) => {
+          expect(res).to.have.status(204);
+        })
+        .then(() => Tag.countDocuments({ _id: fixture.id }))
+        .then((count) => {
+          expect(count).to.equal(1);
         });
     });
   });
