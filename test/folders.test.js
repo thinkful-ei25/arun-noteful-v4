@@ -8,6 +8,7 @@ const sinon = require('sinon');
 const app = require('../server');
 const Folder = require('../models/folder');
 const Note = require('../models/note');
+const User = require('../models/user');
 const utils = require('./utils');
 
 chai.use(chaiHttp);
@@ -264,6 +265,21 @@ describe('Noteful API - Folders', function () {
           expect(res.body.message).to.equal('Internal Server Error');
         });
     });
+
+    it('should not create a folder assigned to another user', function () {
+      return User.findOne({ _id: { $ne: userId } })
+        .then((otherUser) => {
+          const newFolder = { name: 'Test', userId: otherUser.id };
+          return chai
+            .request(app)
+            .post('/api/folders')
+            .set('Authorization', bearerAuth)
+            .send(newFolder);
+        })
+        .then((res) => {
+          expect(res).to.have.status(403);
+        });
+    });
   });
 
   describe('PUT /api/folders/:id', function () {
@@ -405,6 +421,48 @@ describe('Noteful API - Folders', function () {
           expect(res.body.message).to.equal('Internal Server Error');
         });
     });
+
+    it('should return 403 if attempting to change userId', function () {
+      let otherUser;
+      return User.findOne({ _id: { $ne: userId } })
+        .then((user) => {
+          otherUser = user;
+        })
+        .then(() => Folder.findOne({ userId }))
+        .then((folder) => {
+          expect(folder).to.exist;
+          const update = Object.assign(folder.toObject(), { userId: otherUser.id });
+          return chai
+            .request(app)
+            .put(`/api/folders/${folder.id}`)
+            .set('Authorization', bearerAuth)
+            .send(update);
+        })
+        .then((res) => {
+          expect(res).to.have.status(403);
+          expect(res).to.be.json;
+          expect(res.body.message).to.equal(
+            'Cannot transfer folder to a different user',
+          );
+        });
+    });
+
+    // eslint-disable-next-line max-len
+    it("should return 404 if attempting to overwrite another user's folder", function () {
+      return User.findOne({ _id: { $ne: userId } })
+        .then(user => Folder.findOne({ userId: user.id }))
+        .then((folder) => {
+          const update = Object.assign(folder.toObject(), { userId });
+          return chai
+            .request(app)
+            .put(`/api/folders/${folder.id}`)
+            .set('Authorization', bearerAuth)
+            .send(update);
+        })
+        .then((res) => {
+          expect(res).to.have.status(404);
+        });
+    });
   });
 
   describe('DELETE /api/folders/:id', function () {
@@ -472,6 +530,26 @@ describe('Noteful API - Folders', function () {
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
           expect(res.body.message).to.equal('Internal Server Error');
+        });
+    });
+
+    it("should not delete another user's folder", function () {
+      let fixture;
+      return User.findOne({ _id: { $ne: userId } })
+        .then(user => Folder.findOne({ userId: user.id }))
+        .then((folder) => {
+          fixture = folder;
+          return chai
+            .request(app)
+            .delete(`/api/folders/${fixture.id}`)
+            .set('Authorization', bearerAuth);
+        })
+        .then((res) => {
+          expect(res).to.have.status(204);
+        })
+        .then(() => Folder.countDocuments({ _id: fixture.id }))
+        .then((count) => {
+          expect(count).to.equal(1);
         });
     });
   });
