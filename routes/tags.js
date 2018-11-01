@@ -38,7 +38,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Tag.find({ _id: id, userId })
+  Tag.findOne({ _id: id, userId })
     .then((result) => {
       if (result) {
         res.json(result);
@@ -100,7 +100,7 @@ router.put('/:id', (req, res, next) => {
     return next(err);
   }
 
-  if (userId !== req.body.userId) {
+  if (req.body.userId && req.body.userId !== userId) {
     const err = new Error('Cannot transfer a tag to a different user');
     err.status = 403;
     return next(err);
