@@ -100,7 +100,7 @@ router.put('/:id', (req, res, next) => {
     return next(err);
   }
 
-  if (userId !== req.body.userId) {
+  if (req.body.userId && req.body.userId !== userId) {
     const err = new Error('Cannot transfer folder to a different user');
     err.status = 403;
     return next(err);
@@ -128,6 +128,7 @@ router.put('/:id', (req, res, next) => {
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
+  const { id: userId } = req.user;
 
   /** *** Never trust users - validate input **** */
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -136,7 +137,7 @@ router.delete('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Folder.findOneAndDelete({ _id: id })
+  Folder.findOneAndDelete({ _id: id, userId })
     .then((deleted) => {
       if (!deleted) {
         return;
