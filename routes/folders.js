@@ -65,6 +65,12 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
 
+  if (req.body.userId && req.body.userId !== userId) {
+    const err = new Error('Cannot transfer folder to a different user');
+    err.status = 403;
+    return next(err);
+  }
+
   Folder.create(newFolder)
     .then((result) => {
       res

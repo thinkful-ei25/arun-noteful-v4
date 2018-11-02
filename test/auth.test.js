@@ -6,6 +6,7 @@ const jsonwebtoken = require('jsonwebtoken');
 
 const { JWT_SECRET } = require('../config');
 const server = require('../server');
+const tokens = require('../auth/tokens');
 const User = require('../models/user');
 const utils = require('./utils');
 
@@ -13,22 +14,23 @@ const { expect } = chai;
 chai.use(chaiHttp);
 
 describe('Authentication endpoints', () => {
-  before(() => utils.connectToDatabase());
-  after(() => utils.disconnectFromDatabase());
-  afterEach(() => utils.cleanDatabase());
+  before(utils.connectToDatabase);
+  after(utils.disconnectFromDatabase);
+  afterEach(utils.cleanDatabase);
+
+  const user = {
+    username: 'aseehra',
+    password: 'thisismypasswordtherearemanylikeitbutthisoneismind',
+    fullname: 'Arun Seehra',
+  };
+
+  // prettier-ignore
+  beforeEach(() => User
+    .hashPassword(user.password)
+    .then(digest => User.create(Object.assign({}, user, { password: digest }))));
 
   describe('POST /api/login', () => {
     const url = '/api/login';
-    const user = {
-      username: 'aseehra',
-      password: 'thisismypasswordtherearemanylikeitbutthisoneismind',
-      fullname: 'Arun Seehra',
-    };
-
-    // prettier-ignore
-    beforeEach(() => User
-      .hashPassword(user.password)
-      .then(digest => User.create(Object.assign({}, user, { password: digest }))));
 
     context('with valid credentials', () => {
       it('should return a valid JWT', function () {
@@ -86,6 +88,20 @@ describe('Authentication endpoints', () => {
             expect(res).to.have.status(400);
           });
         });
+      });
+    });
+  });
+
+  describe('POST /api/refresh', () => {
+    const requester = chai.request(server).post('/api/refresh');
+
+    it('should return a new, valid authToken', () => {
+      const authToken = tokens.createAuthToken(user);
+      requester.set('Authorization', `Bearer ${authToken}`).then((res) => {
+        expect(res.authToken).to.not.equal(authToken);
+        expect(() => jsonwebtoken.verify(res.body.authToken, JWT_SECRET, {
+          subject: user.username,
+        })).to.not.throw();
       });
     });
   });
