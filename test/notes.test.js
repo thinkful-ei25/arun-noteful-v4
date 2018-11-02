@@ -9,6 +9,7 @@ const app = require('../server');
 const Folder = require('../models/folder');
 const Note = require('../models/note');
 const Tag = require('../models/tag');
+const User = require('../models/user');
 const utils = require('./utils');
 
 chai.use(chaiHttp);
@@ -33,6 +34,10 @@ describe('Noteful API - Notes', function () {
     sandbox.restore();
     return utils.cleanDatabase();
   });
+
+  function fetchADifferentUser(id) {
+    return User.findOne({ _id: { $ne: id } });
+  }
 
   describe('GET /api/notes', function () {
     it('should return the correct number of Notes', function () {
@@ -502,6 +507,56 @@ describe('Noteful API - Notes', function () {
           expect(res.body.message).to.equal('Internal Server Error');
         });
     });
+
+    it('should prevent creating a note on behalf of another user', function () {
+      let otherUser;
+      let originalCount;
+      return fetchADifferentUser(userId)
+        .then((aUser) => {
+          otherUser = aUser;
+          return Note.countDocuments({ userId: otherUser.id });
+        })
+        .then((count) => {
+          originalCount = count;
+        })
+        .then(() => {
+          const fixture = { title: 'My amazing new thing', userId: otherUser.id };
+          return chai
+            .request(app)
+            .post('/api/notes')
+            .set('Authorization', bearerAuth)
+            .send(fixture);
+        })
+        .then(res => expect(res).to.have.status(403))
+        .then(() => Note.countDocuments({ userId: otherUser.id }))
+        .then(count => expect(count).to.equal(originalCount));
+    });
+
+    it("should return 422 if attempting to use another user's tags", function () {
+      const fixture = { title: '<GoT spoiler>' };
+      return fetchADifferentUser(userId)
+        .then(otherUser => Tag.findOne({ userId: otherUser.id }))
+        .then(tag => chai
+          .request(app)
+          .post('/api/notes')
+          .set('Authorization', bearerAuth)
+          .send(Object.assign({}, fixture, { tags: [tag.id] })))
+        .then((res) => {
+          expect(res).to.have.status(422);
+        });
+    });
+
+    it("should return 422 if attempting to use another user's folder", function () {
+      const fixture = { title: '<GoT spoiler>' };
+      return fetchADifferentUser(userId)
+        .then(otherUser => Folder.findOne({ userId: otherUser.id }))
+        .then(({ id: folderId }) => chai
+          .request(app)
+          .post('/api/notes')
+          .set('Authorization', bearerAuth)
+          .send(Object.assign({}, fixture, { folderId })))
+        .then(res => expect(res).to.have.status(422));
+    });
   });
 
   describe('PUT /api/notes/:id', function () {
@@ -802,6 +857,92 @@ describe('Noteful API - Notes', function () {
           expect(res.body.message).to.equal('Internal Server Error');
         });
     });
+
+    it("should prevent overwriting another user's notes", function () {
+      let fixture;
+      return fetchADifferentUser(userId)
+        .then(otherUser => Note.findOne({ userId: otherUser.id }))
+        .then((note) => {
+          fixture = note;
+          const update = { title: '<GoT Spoiler>' };
+          return chai
+            .request(app)
+            .put(`/api/notes/${fixture.id}`)
+            .set('Authorization', bearerAuth)
+            .send(update);
+        })
+        .then(res => expect(res).to.have.status(404))
+        .then(() => Note.findById(fixture.id))
+        .then((note) => {
+          expect(note.toObject()).to.deep.equal(fixture.toObject());
+        });
+    });
+
+    it('should prevent transfering a note to another user', function () {
+      let otherUser;
+      let originalCount;
+      return fetchADifferentUser(userId)
+        .then((aUser) => {
+          otherUser = aUser;
+          return Promise.all([
+            Note.countDocuments({ userId: otherUser.id }),
+            Note.findOne({ userId }),
+          ]);
+        })
+        .then(([count, fixture]) => {
+          originalCount = count;
+          return chai
+            .request(app)
+            .put(`/api/notes/${fixture.id}`)
+            .set('Authorization', bearerAuth)
+            .send(Object.assign({}, fixture.toObject(), { userId: otherUser.id }));
+        })
+        .then(res => expect(res).to.have.status(403))
+        .then(() => Note.countDocuments({ userId: otherUser.id }))
+        .then(count => expect(count).to.equal(originalCount));
+    });
+
+    it("should return 422 if attempting to use another user's tags", function () {
+      let fixture;
+      return fetchADifferentUser(userId)
+        .then(otherUser => Promise.all([
+          Note.findOne({ userId: otherUser.id }),
+          Tag.findOne({ userId: otherUser.id }),
+        ]))
+        .then(([note, tag]) => {
+          fixture = note;
+          return chai
+            .request(app)
+            .put(`/api/notes/${fixture.id}`)
+            .set('Authorization', bearerAuth)
+            .send(Object.assign({}, fixture.toObject(), { tags: [tag.id] }));
+        })
+        .then(res => expect(res).to.have.status(422))
+        .then(() => Note.findById(fixture.id))
+        .then((note) => {
+          expect(note.toObject()).to.deep.equal(fixture.toObject());
+        });
+    });
+
+    it("should return 422 if attempting to use another user's folder", function () {
+      let fixture;
+      return fetchADifferentUser(userId)
+        .then(({ id: otherUserId }) => Promise.all([
+          Note.findOne({ userId }),
+          Folder.findOne({ userId: otherUserId }),
+        ]))
+        .then(([note, { id: folderId }]) => {
+          fixture = note;
+          return chai
+            .request(app)
+            .put(`/api/notes/${fixture.id}`)
+            .set('Authorization', bearerAuth)
+            .send(Object.assign({}, fixture.toObject(), { folderId }));
+        })
+        .then(res => expect(res).to.have.status(422))
+        .then(() => Note.findById(fixture.id))
+        .then(note => expect(note.toObject()).to.deep.equal(fixture.toObject()));
+    });
   });
 
   describe('DELETE /api/notes/:id', function () {
@@ -848,6 +989,21 @@ describe('Noteful API - Notes', function () {
           expect(res.body).to.be.a('object');
           expect(res.body.message).to.equal('Internal Server Error');
         });
+    });
+
+    it("should not delete other user's notes", function () {
+      let fixture;
+      return fetchADifferentUser(userId)
+        .then(otherUser => Note.findOne({ userId: otherUser.id }))
+        .then((note) => {
+          fixture = note;
+          return chai
+            .request(app)
+            .delete(`/api/notes/${fixture.id}`)
+            .set('Authorization', bearerAuth);
+        })
+        .then(() => Note.countDocuments({ _id: fixture.id }))
+        .then(count => expect(count).to.equal(1));
     });
   });
 });

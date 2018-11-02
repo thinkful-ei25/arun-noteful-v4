@@ -149,6 +149,7 @@ router.post(
       return next(err);
     }
 
+
     const newNote = {
       title,
       content,
@@ -158,6 +159,12 @@ router.post(
     };
     if (newNote.folderId === '') {
       delete newNote.folderId;
+    }
+
+    if (req.body.userId && req.body.userId !== userId) {
+      const err = new Error('Cannot create a note on behalf of another user');
+      err.status = 403;
+      return next(err);
     }
 
     Note.create(newNote)
@@ -207,7 +214,7 @@ router.put(
 
     if (toUpdate.userId && toUpdate.userId !== userId) {
       const err = new Error('Cannot transfer note to another user');
-      err.status = 422;
+      err.status = 403;
       return next(err);
     }
 
