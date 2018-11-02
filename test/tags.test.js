@@ -540,5 +540,27 @@ describe('Noteful API - Tags', function () {
           expect(count).to.equal(1);
         });
     });
+
+    it("should not cascade for another user's tags", function () {
+      let fixture;
+      let originalCount;
+      return User.findOne({ _id: { $ne: userId } })
+        .then(otherUser => Tag.findOne({ userId: otherUser.id }))
+        .then((tag) => {
+          fixture = tag;
+          return Note.countDocuments({ tags: fixture.id });
+        })
+        .then((count) => {
+          originalCount = count;
+        })
+        .then(() => chai
+          .request(app)
+          .delete(`/api/tags/${fixture.id}`)
+          .set('Authorization', bearerAuth))
+        .then(() => Note.countDocuments({ tags: fixture.id }))
+        .then((count) => {
+          expect(count).to.equal(originalCount);
+        });
+    });
   });
 });

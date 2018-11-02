@@ -552,5 +552,27 @@ describe('Noteful API - Folders', function () {
           expect(count).to.equal(1);
         });
     });
+
+    it("should not cascade for another user's folders", function () {
+      let fixture;
+      let originalCount;
+      return User.findOne({ _id: { $ne: userId } })
+        .then(otherUser => Folder.findOne({ userId: otherUser.id }))
+        .then((folder) => {
+          fixture = folder;
+          return Note.countDocuments({ folderId: fixture.id });
+        })
+        .then((count) => {
+          originalCount = count;
+        })
+        .then(() => chai
+          .request(app)
+          .delete(`/api/folders/${fixture.id}`)
+          .set('Authorization', bearerAuth))
+        .then(() => Note.countDocuments({ folderId: fixture.id }))
+        .then((count) => {
+          expect(count).to.equal(originalCount);
+        });
+    });
   });
 });
